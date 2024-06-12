@@ -1,0 +1,131 @@
+pipeline {
+    agent any
+
+    environment {
+        // Set your GitHub token as a secret environment variable
+        GITHUB_TOKEN = credentials('your-github-token')
+        GITHUB_ORG = 'your-github-org'
+        REPO_NAME = 'your-repo-name'
+        INIT_BRANCH = 'init'
+    }
+
+    parameters {
+        string(name: 'TEAM_NAME', defaultValue: 'dev-team', description: 'Name of the GitHub team to create')
+        string(name: 'REPO_DESCRIPTION', defaultValue: 'This is the repository description', description: 'Description for the README.md file')
+    }
+
+    stages {
+        stage('Create GitHub Team') {
+            steps {
+                script {
+                    def teamName = params.TEAM_NAME
+
+                    sh """
+                        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        https://api.github.com/orgs/${GITHUB_ORG}/teams \
+                        -d '{ "name": "${teamName}", "privacy": "closed" }'
+                    """
+                }
+            }
+        }
+
+        stage('Create GitHub Repository') {
+            steps {
+                script {
+                    def repoName = REPO_NAME
+
+                    sh """
+                        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        https://api.github.com/orgs/${GITHUB_ORG}/repos \
+                        -d '{ "name": "${repoName}", "private": true }'
+                    """
+                }
+            }
+        }
+
+        stage('Add Team to Repository') {
+            steps {
+                script {
+                    def teamName = params.TEAM_NAME
+                    def repoName = REPO_NAME
+
+                    sh """
+                        curl -X PUT -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        https://api.github.com/orgs/${GITHUB_ORG}/teams/${teamName}/repos/${GITHUB_ORG}/${repoName} \
+                        -d '{ "permission": "admin" }'
+                    """
+                }
+            }
+        }
+
+        stage('Protect Master Branch') {
+            steps {
+                script {
+                    def repoName = REPO_NAME
+
+                    sh """
+                        curl -X PUT -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.luke-cage-preview+json" \
+                        https://api.github.com/repos/${GITHUB_ORG}/${repoName}/branches/master/protection \
+                        -d '{
+                            "required_status_checks": null,
+                            "enforce_admins": false,
+                            "required_pull_request_reviews": {
+                                "required_approving_review_count": 1
+                            },
+                            "restrictions": null
+                        }'
+                    """
+                }
+            }
+        }
+
+        stage('Create Init Branch') {
+            steps {
+                script {
+                    def repoName = REPO_NAME
+                    def initBranch = INIT_BRANCH
+                    def description = params.REPO_DESCRIPTION
+                    def jenkinsfileContent = libraryResource 'path/to/Jenkinsfile'
+
+                    // Create init branch
+                    sh """
+                        git clone https://github.com/${GITHUB_ORG}/${repoName}.git
+                        cd ${repoName}
+                        git checkout -b ${initBranch}
+                        mkdir -p dags/code
+                        echo '# ${description}' > README.md
+                        echo '${jenkinsfileContent}' > Jenkinsfile
+                        git add .
+                        git commit -m "Initial commit with README, Jenkinsfile, and directory structure"
+                        git push origin ${initBranch}
+                    """
+                }
+            }
+        }
+
+        stage('Create Pull Request') {
+            steps {
+                script {
+                    def repoName = REPO_NAME
+                    def initBranch = INIT_BRANCH
+
+                    sh """
+                        curl -X POST -H "Authorization: token ${GITHUB_TOKEN}" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        https://api.github.com/repos/${GITHUB_ORG}/${repoName}/pulls \
+                        -d '{
+                            "title": "Initialize repository",
+                            "head": "${initBranch}",
+                            "base": "master",
+                            "body": "This PR initializes the repository with a README.md, Jenkinsfile, and directory structure."
+                        }'
+                    """
+                }
+            }
+        }
+    }
+}
