@@ -1,9 +1,11 @@
+from airflow import DAG
 from airflow.decorators import dag, task
 from airflow.utils.dates import days_ago
 from datetime import timedelta
 import requests
-import subprocess
 import json
+from scapy.all import IP, ICMP, sr1
+import socket
 
 # Define the default arguments
 default_args = {
@@ -16,7 +18,6 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
-# Define the DAG using the @dag decorator
 @dag(
     default_args=default_args,
     description='A DAG that traces route and calls an API with a URL provided at runtime',
@@ -28,39 +29,47 @@ def call_api_with_trace_route():
 
     @task
     def trace_route(url: str):
+        # Extract the hostname or IP address from the URL
         from urllib.parse import urlparse
-        import socket
-
-        # Extract the hostname from the URL
         parsed_url = urlparse(url)
-        hostname = parsed_url.hostname
+        hostname_or_ip = parsed_url.hostname
 
-        if not hostname:
+        if not hostname_or_ip:
             raise ValueError("Invalid URL")
 
-        # Get the IP address of the hostname
-        ip_address = socket.gethostbyname(hostname)
-        
-        # Initialize pyroute2 IPRoute
-        ipr = IPRoute()
+        # Check if the provided hostname_or_ip is an IP address
+        try:
+            socket.inet_aton(hostname_or_ip)
+            is_ip = True
+        except socket.error:
+            is_ip = False
 
-        # Perform traceroute
+        if not is_ip:
+            try:
+                # Resolve hostname to IP address
+                hostname_or_ip = socket.gethostbyname(hostname_or_ip)
+            except socket.error:
+                raise ValueError("Hostname resolution failed")
+
+        # Perform the traceroute using scapy
         max_hops = 30
         timeout = 2
+        print(f"Tracing route to {hostname_or_ip} with a maximum of {max_hops} hops:")
         hops = []
-
         for ttl in range(1, max_hops + 1):
-            response = ipr.route('get', {'dst': ip_address, 'ttl': ttl, 'timeout': timeout})
-            if not response:
+            pkt = IP(dst=hostname_or_ip, ttl=ttl) / ICMP()
+            reply = sr1(pkt, verbose=0, timeout=timeout)
+            if reply is None:
                 print(f"{ttl} *")
                 hops.append(f"{ttl} *")
+            elif reply.type == 0:  # Echo reply (the destination is reached)
+                print(f"{ttl} {reply.src}")
+                hops.append(f"{ttl} {reply.src}")
+                break
             else:
-                print(f"{ttl} {response[0]['attrs'][0][1]}")
-                hops.append(f"{ttl} {response[0]['attrs'][0][1]}")
-                if response[0]['attrs'][0][1] == ip_address:
-                    break
+                print(f"{ttl} {reply.src}")
+                hops.append(f"{ttl} {reply.src}")
 
-        ipr.close()
         print(f"Traceroute result:\n{''.join(hops)}")
 
     @task
