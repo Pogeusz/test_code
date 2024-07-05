@@ -1,0 +1,13 @@
+@task
+    def trace_route():
+        import os
+        # Replace with the internal IP address of your GCE VM
+        gce_vm_ip = '10.128.0.2'  # Example IP, replace with your actual VM IP
+        print(f"Tracing route to {gce_vm_ip}")
+        response = os.system(f"traceroute {gce_vm_ip}")
+        if response == 0:
+            print(f"Successfully traced route to {gce_vm_ip}")
+        else:
+            print(f"Failed to trace route to {gce_vm_ip}")
+
+    trace_route()
