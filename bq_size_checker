@@ -1,16 +1,7 @@
-function Convert-BytesToHumanReadable($bytes) {
-    if ($bytes -eq 0) { return "0 B" }
-    $units = @("B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB")
-    $i = [math]::Floor([math]::Log($bytes, 1024))
-    $value = [math]::Round($bytes / [math]::Pow(1024, $i), 2)
-    return "$value $($units[$i])"
-}
-
 $datasetId = "your_dataset_id"
 $tables = bq ls --format=json $datasetId | ConvertFrom-Json
 foreach ($table in $tables) {
     $tableId = $table.tableId
     $tableInfo = bq show --format=json "$datasetId.$tableId" | ConvertFrom-Json
-    $humanReadableBytes = Convert-BytesToHumanReadable $tableInfo.numBytes
-    Write-Output "$($tableInfo.tableReference.tableId) $humanReadableBytes"
+    Write-Output "$($tableInfo.tableReference.tableId) $($tableInfo.numBytes)"
 }
