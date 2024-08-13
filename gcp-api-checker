@@ -1,0 +1,50 @@
+import requests
+from bs4 import BeautifulSoup
+
+def scrape_table(url):
+    # Step 1: Request the webpage content
+    response = requests.get(url)
+    response.raise_for_status()  # Ensure we got a successful response
+
+    # Step 2: Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Step 3: Find the table in the HTML
+    table = soup.find('table')  # Assuming the first table is the target
+
+    if not table:
+        raise ValueError("No table found on the webpage")
+
+    # Step 4: Extract headers to identify the correct columns
+    headers = [header.text.strip() for header in table.find_all('th')]
+    
+    # Ensure the table has the required columns
+    if 'API' not in headers or 'Allowed Dev' not in headers or 'Allowed Prod' not in headers:
+        raise ValueError("Required columns not found in the table")
+    
+    # Find the indexes of the required columns
+    api_index = headers.index('API')
+    dev_index = headers.index('Allowed Dev')
+    prod_index = headers.index('Allowed Prod')
+    
+    # Step 5: Iterate through the rows and extract the key-value pairs
+    data = []
+    for row in table.find_all('tr')[1:]:  # Skip the header row
+        columns = row.find_all('td')
+        if len(columns) > max(api_index, dev_index, prod_index):
+            api_key = columns[api_index].text.strip()
+            allowed_dev = columns[dev_index].text.strip()
+            allowed_prod = columns[prod_index].text.strip()
+            data.append({
+                'API': api_key,
+                'Allowed Dev': allowed_dev,
+                'Allowed Prod': allowed_prod
+            })
+    
+    return data
+
+# Example usage
+url = "YOUR_URL_HERE"
+result = scrape_table(url)
+for entry in result:
+    print(f"API: {entry['API']}, Allowed Dev: {entry['Allowed Dev']}, Allowed Prod: {entry['Allowed Prod']}")
