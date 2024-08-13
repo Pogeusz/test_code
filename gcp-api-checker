@@ -1,7 +1,17 @@
 import requests
 from bs4 import BeautifulSoup
+from prettytable import PrettyTable
 
-def scrape_table(url):
+# Function to color text in terminal
+def color_text(text, color):
+    color_codes = {
+        'red': '\033[91m',
+        'green': '\033[92m',
+        'endc': '\033[0m',
+    }
+    return f"{color_codes[color]}{text}{color_codes['endc']}"
+
+def scrape_table(url, api_names):
     # Step 1: Request the webpage content
     response = requests.get(url)
     response.raise_for_status()  # Ensure we got a successful response
@@ -27,24 +37,32 @@ def scrape_table(url):
     dev_index = headers.index('Allowed Dev')
     prod_index = headers.index('Allowed Prod')
     
-    # Step 5: Iterate through the rows and extract the key-value pairs
-    data = []
+    # Step 5: Prepare the table output
+    pt = PrettyTable()
+    pt.field_names = ["API", "Dev", "Prod"]
+    
+    # Step 6: Iterate through the rows and extract the key-value pairs only for specified APIs
     for row in table.find_all('tr')[1:]:  # Skip the header row
         columns = row.find_all('td')
         if len(columns) > max(api_index, dev_index, prod_index):
             api_key = columns[api_index].text.strip()
-            allowed_dev = columns[dev_index].text.strip()
-            allowed_prod = columns[prod_index].text.strip()
-            data.append({
-                'API': api_key,
-                'Allowed Dev': allowed_dev,
-                'Allowed Prod': allowed_prod
-            })
+            if api_key in api_names:  # Only process if the API name is in the provided list
+                allowed_dev = columns[dev_index].text.strip()
+                allowed_prod = columns[prod_index].text.strip()
+                
+                # Color the values based on their Boolean status
+                colored_dev = color_text(allowed_dev, 'green' if allowed_dev == 'True' else 'red')
+                colored_prod = color_text(allowed_prod, 'green' if allowed_prod == 'True' else 'red')
+                
+                pt.add_row([api_key, colored_dev, colored_prod])
     
-    return data
+    # Return the formatted table
+    return pt
 
 # Example usage
 url = "YOUR_URL_HERE"
-result = scrape_table(url)
-for entry in result:
-    print(f"API: {entry['API']}, Allowed Dev: {entry['Allowed Dev']}, Allowed Prod: {entry['Allowed Prod']}")
+api_names = ["API_NAME_1", "API_NAME_2"]  # Replace with the actual API names you want to check
+result_table = scrape_table(url, api_names)
+
+# Print the formatted table
+print(result_table)
