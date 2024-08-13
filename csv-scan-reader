@@ -1,0 +1,36 @@
+import os
+import csv
+
+def find_string_in_csv(directory, search_string):
+    found_files = []
+    
+    # Loop through all files in the given directory
+    for filename in os.listdir(directory):
+        # Check if the file is a CSV file
+        if filename.endswith(".csv"):
+            file_path = os.path.join(directory, filename)
+            
+            # Open the CSV file
+            with open(file_path, mode='r', encoding='utf-8') as file:
+                reader = csv.reader(file)
+                
+                # Check each row in the CSV file for the search string
+                for row in reader:
+                    if any(search_string in cell for cell in row):
+                        found_files.append(filename)
+                        break
+    
+    return found_files
+
+# Example usage
+directory = "/path/to/csv/files"  # Replace with your directory path
+search_string = "your_search_string"  # Replace with the string you're looking for
+
+matching_files = find_string_in_csv(directory, search_string)
+
+if matching_files:
+    print("String found in the following files:")
+    for file in matching_files:
+        print(file)
+else:
+    print("String not found in any files.")
