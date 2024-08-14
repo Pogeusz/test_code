@@ -6,18 +6,12 @@ def load_json(file_path):
         data = json.load(file)
     return data
 
-def search_keys(data, search_value, parent_key=''):
+def search_keys(data, search_value):
     found_keys = []
     if isinstance(data, dict):
-        for key, value in data.items():
-            full_key = f"{parent_key}.{key}" if parent_key else key
+        for key in data.keys():
             if search_value in key:
-                found_keys.append(full_key)
-            found_keys.extend(search_keys(value, search_value, full_key))
-    elif isinstance(data, list):
-        for index, item in enumerate(data):
-            full_key = f"{parent_key}[{index}]"
-            found_keys.extend(search_keys(item, search_value, full_key))
+                found_keys.append(key)
     return found_keys
 
 def compare_keys(keys1, keys2):
@@ -40,8 +34,13 @@ def create_comparison_table(comparison):
 def main(json_file, search_value_1, search_value_2):
     data = load_json(json_file)
     
-    keys1 = search_keys(data, search_value_1)
-    keys2 = search_keys(data, search_value_2)
+    if "standard_role_bindings" not in data:
+        raise ValueError("'standard_role_bindings' key not found in the provided JSON file.")
+    
+    role_bindings_data = data["standard_role_bindings"]
+    
+    keys1 = search_keys(role_bindings_data, search_value_1)
+    keys2 = search_keys(role_bindings_data, search_value_2)
     
     comparison = compare_keys(keys1, keys2)
     
