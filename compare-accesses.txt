@@ -21,15 +21,24 @@ def compare_keys(keys1, keys2):
         in_first = key in keys1
         in_second = key in keys2
         comparison.append({
-            'Key': key,
-            'In First Search': in_first,
-            'In Second Search': in_second
+            'Role': key,
+            'Principal 1': in_first,
+            'Principal 2': in_second
         })
     return comparison
 
 def create_comparison_table(comparison):
     df = pd.DataFrame(comparison)
-    return df
+    
+    # Apply styling
+    def color_boolean(val):
+        color = 'green' if val else 'red'
+        return f'color: {color}'
+
+    # Convert boolean values to string with color
+    styled_df = df.style.applymap(color_boolean, subset=['Principal 1', 'Principal 2'])
+    
+    return styled_df
 
 def main(json_file, search_value_1, search_value_2):
     data = load_json(json_file)
@@ -53,4 +62,4 @@ def main(json_file, search_value_1, search_value_2):
 # search_value_1 = 'value1'
 # search_value_2 = 'value2'
 # result_table = main(json_file_path, search_value_1, search_value_2)
-# print(result_table)
+# result_table  # This will show the styled DataFrame in Jupyter Notebook
