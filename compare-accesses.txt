@@ -1,0 +1,57 @@
+import json
+import pandas as pd
+
+def load_json(file_path):
+    with open(file_path, 'r') as file:
+        data = json.load(file)
+    return data
+
+def search_keys(data, search_value, parent_key=''):
+    found_keys = []
+    if isinstance(data, dict):
+        for key, value in data.items():
+            full_key = f"{parent_key}.{key}" if parent_key else key
+            if search_value in key:
+                found_keys.append(full_key)
+            found_keys.extend(search_keys(value, search_value, full_key))
+    elif isinstance(data, list):
+        for index, item in enumerate(data):
+            full_key = f"{parent_key}[{index}]"
+            found_keys.extend(search_keys(item, search_value, full_key))
+    return found_keys
+
+def compare_keys(keys1, keys2):
+    comparison = []
+    all_keys = set(keys1).union(set(keys2))
+    for key in all_keys:
+        in_first = key in keys1
+        in_second = key in keys2
+        comparison.append({
+            'Key': key,
+            'In First Search': in_first,
+            'In Second Search': in_second
+        })
+    return comparison
+
+def create_comparison_table(comparison):
+    df = pd.DataFrame(comparison)
+    return df
+
+def main(json_file, search_value_1, search_value_2):
+    data = load_json(json_file)
+    
+    keys1 = search_keys(data, search_value_1)
+    keys2 = search_keys(data, search_value_2)
+    
+    comparison = compare_keys(keys1, keys2)
+    
+    comparison_table = create_comparison_table(comparison)
+    
+    return comparison_table
+
+# Example usage:
+# json_file_path = 'example.json'
+# search_value_1 = 'value1'
+# search_value_2 = 'value2'
+# result_table = main(json_file_path, search_value_1, search_value_2)
+# print(result_table)
