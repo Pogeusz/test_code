@@ -1,5 +1,5 @@
 import json
-import pandas as pd
+from prettytable import PrettyTable
 
 def load_json(file_path):
     with open(file_path, 'r') as file:
@@ -28,17 +28,21 @@ def compare_keys(keys1, keys2):
     return comparison
 
 def create_comparison_table(comparison):
-    df = pd.DataFrame(comparison)
+    table = PrettyTable()
+    table.field_names = ["Role", "Principal 1", "Principal 2"]
     
-    # Apply styling
-    def color_boolean(val):
-        color = 'green' if val else 'red'
-        return f'color: {color}'
-
-    # Convert boolean values to string with color
-    styled_df = df.style.applymap(color_boolean, subset=['Principal 1', 'Principal 2'])
+    for entry in comparison:
+        role = entry['Role']
+        principal_1 = entry['Principal 1']
+        principal_2 = entry['Principal 2']
+        
+        # Formatting the boolean values with colors
+        principal_1_text = f"\033[92mTrue\033[0m" if principal_1 else f"\033[91mFalse\033[0m"
+        principal_2_text = f"\033[92mTrue\033[0m" if principal_2 else f"\033[91mFalse\033[0m"
+        
+        table.add_row([role, principal_1_text, principal_2_text])
     
-    return styled_df
+    return table
 
 def main(json_file, search_value_1, search_value_2):
     data = load_json(json_file)
@@ -60,6 +64,4 @@ def main(json_file, search_value_1, search_value_2):
 # Example usage:
 # json_file_path = 'example.json'
 # search_value_1 = 'value1'
-# search_value_2 = 'value2'
-# result_table = main(json_file_path, search_value_1, search_value_2)
-# result_table  # This will show the styled DataFrame in Jupyter Notebook
+# search_value_​⬤
