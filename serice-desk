@@ -28,28 +28,46 @@
             cursor: pointer;
         }
     </style>
+    <!-- Link to AUI CSS (if it's hosted externally) -->
+    <!-- <link rel="stylesheet" href="path/to/aui.css"> -->
 </head>
 <body>
 
     <h2>Header for Table 1</h2>
     <table class="table1">
         <tr>
-            <td><button class="btn-table1" onclick="placeholderFunction()">Button 1</button></td>
-            <td><button class="btn-table1" onclick="placeholderFunction()">Button 2</button></td>
-            <td><button class="btn-table1" onclick="placeholderFunction()">Button 3</button></td>
-            <td><button class="btn-table1" onclick="placeholderFunction()">Button 4</button></td>
-            <td><button class="btn-table1" onclick="placeholderFunction()">Button 5</button></td>
+            <td><button class="aui-button aui-button-primary btn-table1" onclick="placeholderFunction()">Button 1</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table1" onclick="placeholderFunction()">Button 2</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table1" onclick="placeholderFunction()">Button 3</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table1" onclick="placeholderFunction()">Button 4</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table1" onclick="placeholderFunction()">Button 5</button></td>
         </tr>
     </table>
 
     <h2>Header for Table 2</h2>
     <table class="table2">
         <tr>
-            <td><button class="btn-table2" onclick="placeholderFunction()">Button 1</button></td>
-            <td><button class="btn-table2" onclick="placeholderFunction()">Button 2</button></td>
-            <td><button class="btn-table2" onclick="placeholderFunction()">Button 3</button></td>
-            <td><button class="btn-table2" onclick="placeholderFunction()">Button 4</button></td>
-            <td><button class="btn-table2" onclick="placeholderFunction()">Button 5</button></td>
+            <td><button class="aui-button aui-button-primary btn-table2" onclick="placeholderFunction()">Button 1</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table2" onclick="placeholderFunction()">Button 2</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table2" onclick="placeholderFunction()">Button 3</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table2" onclick="placeholderFunction()">Button 4</button></td>
+        </tr>
+        <tr>
+            <td><button class="aui-button aui-button-primary btn-table2" onclick="placeholderFunction()">Button 5</button></td>
         </tr>
     </table>
 
